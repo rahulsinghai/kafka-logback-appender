@@ -1,57 +1,37 @@
-# Faster builds https://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure
 sudo: false
 dist: trusty
-
 language: java
-
 jdk:
-  - openjdk8
-
+- openjdk8
 before_install:
-  - echo "Download Maven ${CUSTOM_MVN_VERION}....";
-  - wget https://archive.apache.org/dist/maven/maven-3/${CUSTOM_MVN_VERION}/binaries/apache-maven-${CUSTOM_MVN_VERION}-bin.tar.gz
-  - tar xzvf apache-maven-${CUSTOM_MVN_VERION}-bin.tar.gz
-  - export M2_HOME=`pwd`/apache-maven-${CUSTOM_MVN_VERION}
-  - export PATH=$M2_HOME/bin:$PATH
-  - mvn -v
-
+- echo "Download Maven ${CUSTOM_MVN_VERION}....";
+- wget https://archive.apache.org/dist/maven/maven-3/${CUSTOM_MVN_VERION}/binaries/apache-maven-${CUSTOM_MVN_VERION}-bin.tar.gz
+- tar xzvf apache-maven-${CUSTOM_MVN_VERION}-bin.tar.gz
+- export M2_HOME=`pwd`/apache-maven-${CUSTOM_MVN_VERION}
+- export PATH=$M2_HOME/bin:$PATH
+- mvn -v
 install: mvn install -DskipTests=true -Dgpg.skip=true;
-
-# Run unit and integration tests
 script: mvn verify -B -q
-
-# cache the build tool's caches
 cache:
   directories:
-    - "$HOME/.m2"
-
-# After the build, run the script that will collect JaCoCo statistics
-# It uses the third-party service https://codecov.io/
+  - "$HOME/.m2"
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
-#  - [ [ $TRAVIS_BRANCH == "master" && $TRAVIS_REPO_SLUG == "rahulsinghai/kafka-logback-appender"
-#    && $TRAVIS_PULL_REQUEST == "false" ] ] && { curl https://raw.githubusercontent.com/holisticon/travis-configuration/master/settings.xml --location
-#    --create-dirs -o target/travis/settings.xml; } && { mvn cobertura:cobertura coveralls:report deploy -q --settings target/travis/settings.xml
-#    -Dgpg.skip=true; }
-#  - if [ "$TRAVIS_BRANCH" != "master" ]; then openssl aes-256-cbc -pass pass:$ENC_PASSWORD
-#    -in .travis/sign.asc.enc -out .travis/sign.asc -d; gpg -q --fast-import .travis/sign.asc;
-#    mvn deploy --settings .travis.settings.xml -DskipTests=true; chmod +x .travis/upload-build.sh; .travis/upload-build.sh; fi
-
-# Send a notification to your email id, if the assembly has dropped
+- bash <(curl -s https://codecov.io/bash)
 notifications:
   email:
     recipients:
-      - singrahu@gmail.com
-    on_success: change  # options: [always|never|change] default: always
-    on_failure: always  # options: [always|never|change] default: always
-    on_start: never     # options: [always|never|change] default: always
+    - singrahu@gmail.com
+    on_success: change
+    on_failure: always
+    on_start: never
   webhooks:
     urls:
-      - https://webhooks.gitter.im/e/3030952ce142f06ee5b3
-    on_success: change  # options: [always|never|change] default: always
-    on_failure: always  # options: [always|never|change] default: always
-    on_start: never     # options: [always|never|change] default: always
-
+    - https://webhooks.gitter.im/e/9363101189dff56e0e0c
+    on_success: change
+    on_failure: always
+    on_start: never
 env:
   global:
-    - CUSTOM_MVN_VERION="3.6.1"
+  - CUSTOM_MVN_VERION="3.6.1"
+  # CodeCov.io API token
+  - secure: hkNJkryDI+1DjOJl8dZPK72b1l1V0QMhsQq9Nowre/EzH76KFDeoHks9Aez5daK4HqIhc825VnKdyn/SgE9T7kmN76w46jueL2aXo2OlefhriqVf7Qic03GQDWVyreczPl/chaKLWEZpMPPrrYn9XaN0yj+FmHWtXCcrq85yi/2miSfeXjdcfyTOjYhYZvzJjsjQtgJfRHZOX4I+YUstbpTFxIvNSSbkNOg9wA64QiOXFptqFXF/4styqD/pJ8RxlzTH2dP7lSol/+knS4Dk0v5ShlotP4MJuv7vlMcUoh09/wstCzesU7VA4RvGTGChoFvV4FvjflN/VtO3h7Zval3Gs1+QJsQ0fUWzvJvf1kG9DM5yrXEfiNUipylYm7+kadvhdRVGvICjj9bDN23x9g/BuhUqZmyoHIwT0CGbhinZtHO7Kn/DuE9+mKHNJPlIBTRyGwqazskOR+vyKNyewZm00m47oyPmfAG8OMlwGvJWT0UhHTXWuE1Tr4N/70XfySKLrtzkpJPmXx3BjnXiUt+G4nCJ5O/4sDf2QTowhmN7wFK+R2JAo5V1218SKstLLboZXC2+OYVlm6Z/5TUh0t2HcbUet+8eC7auCxXozgMGvyiI/XNDeLC1QQ5BeLj4nsEtX6vugaVaqD+E+CLTGyn3IojZEoOrd+l8h6jI4Fc=
