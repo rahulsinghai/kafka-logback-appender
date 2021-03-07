@@ -37,6 +37,9 @@ public class KakfaLogbackAppenderTest extends TestCase {
             logger.info(message);
         }
 
+        // Wait for producer to complete sending messages
+        waitMilliseconds(100);
+
         ArrayList<String> sentMessages = TestUtils.getTopicQueueMessages(logger, topic);
         Assert.assertEquals(testMessages, sentMessages);
     }
