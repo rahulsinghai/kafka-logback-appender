@@ -1,0 +1,22 @@
+<configuration>
+
+  <appender name="KafkaLogbackAppender" class="io.github.rahulsinghai.KafkaLogbackAppender">
+    <encoder>
+      <pattern>%msg</pattern>
+    </encoder>
+    <MaxBlockMs>10000</MaxBlockMs>
+  </appender>
+  <logger name="LogbackIntegrationIT" additivity="false" level="info">
+    <appender-ref ref="KafkaLogbackAppender"/>
+  </logger>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="warn">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

@@ -1,21 +1,16 @@
-package com.calclab.kafka;
-
+package io.github.rahulsinghai;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-
+import java.util.Properties;
+import java.util.concurrent.Future;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Properties;
-import java.util.concurrent.Future;
-
 public class KafkaLogbackAppender extends KafkaLogbackConfigBase<ILoggingEvent> {
 
-    protected Producer producer = null;
+    protected Producer<byte[], byte[]> producer = null;
 
     public void start() {
         super.start();
@@ -36,19 +31,28 @@ public class KafkaLogbackAppender extends KafkaLogbackConfigBase<ILoggingEvent> 
     protected void append(ILoggingEvent event) {
         byte[] message = null;
         if (encoder != null) {
-            try {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                encoder.init(baos);
-                encoder.setContext(getContext());
-                encoder.doEncode(event);
-                message = baos.toByteArray();
-            } catch (IOException ex) {
-                addError("Error encoding event", ex);
-            }
+            encoder.setContext(getContext());
+            message = encoder.encode(event);
         } else {
             message = event.getMessage().getBytes();
         }
-        Future<RecordMetadata> response = producer.send(new ProducerRecord<byte[], byte[]>(topic, message));
+
+        final ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(topic, message);
+        Future<RecordMetadata> response = producer.send(record);
+
+        /*try {
+            producer.send(record, new Callback() {
+                @Override
+                public void onCompletion(RecordMetadata metadata, Exception exception) {
+                    if (exception != null) {
+                        addError("Error waiting for Kafka response", exception);
+                    }
+                }
+            });
+        } catch (BufferExhaustedException | TimeoutException e) {
+            addError("Error waiting for Kafka response", e);
+        }*/
+
         if (syncSend) {
             try {
                 response.get();
@@ -58,7 +62,7 @@ public class KafkaLogbackAppender extends KafkaLogbackConfigBase<ILoggingEvent> 
         }
     }
 
-    protected Producer createKafkaProducer(Properties props) {
-        return new KafkaProducer<byte[], byte[]>(props);
+    protected Producer<byte[], byte[]> createKafkaProducer(Properties props) {
+        return new KafkaProducer<>(props);
     }
 }

@@ -1,12 +1,15 @@
-Kafka Logback Appender
-======================
+# Kafka Logback Appender
+
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3f5d3daf6b6641cf8592fa07c5a59325)](https://www.codacy.com/gh/rahulsinghai/kafka-logback-appender/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rahulsinghai/kafka-logback-appender&amp;utm_campaign=Badge_Grade)
+[![codecov](https://codecov.io/gh/rahulsinghai/kafka-logback-appender/branch/master/graph/badge.svg?token=L7WD7GSSJW)](https://codecov.io/gh/rahulsinghai/kafka-logback-appender)
+[![Build Status](https://travis-ci.com/rahulsinghai/kafka-logback-appender.svg?branch=master)](https://travis-ci.com/rahulsinghai/kafka-logback-appender)
 
 A simple Logback appender which sends the logging output to a [Kafka] (http://kafka.apache.org) broker.
 
 This implementation is inspired by the log4j appender included in the Kafka source distribution.<br/>
 See e.g. [KafkaLog4jAppender] (https://github.com/apache/kafka/blob/trunk/log4j-appender/src/main/java/org/apache/kafka/log4jappender/KafkaLog4jAppender.java).
 
-The Kafka Logback Appender is based on the Kafka version `0.10.0.0`.
+The Kafka Logback Appender is based on the Kafka version `2.1.0`.
 
 ## Configuration parameters
 
@@ -32,6 +35,12 @@ The appender takes the available Kafka Producer parameters (see [ProductConfig] 
 
   <dt>RequiredNumAcks &nbsp; (<small></i><code>acks</code></i></small>)</dt>
   <dd>The number of acknowledgments the producer requires the leader to have received before considering a request complete. This controls the  durability of records that are sent. The following settings are common:  <ul> <li><code>acks=0</code> If set to zero then the producer will not wait for any acknowledgment from the server at all. The record will be immediately added to the socket buffer and considered sent. No guarantee can be made that the server has received the record in this case, and the <code>retries</code> configuration will not take effect (as the client won\'t generally know of any failures). The offset given back for each record will always be set to -1. <li><code>acks=1</code> This will mean the leader will write the record to its local log but will respond without awaiting full acknowledgement from all followers. In this case should the leader fail immediately after acknowledging the record but before the followers have replicated it then the record will be lost. <li><code>acks=-1</code> This means the leader will wait for the full set of in-sync replicas to acknowledge the record. This guarantees that the record will not be lost as long as at least one in-sync replica remains alive. This is the strongest available guarantee.</ul></dd>
+
+  <dt>maxBlockMs &nbsp; (<small></i><code>max.block.ms</code></i></small>)</dt>
+  <dd>The configuration controls how long <code>KafkaProducer.send()</code> and <code>KafkaProducer.partitionsFor()</code> will block. Default: <code>60000 </code> (1 minute). These methods can be blocked either because the buffer is full or metadata unavailable. Blocking in the user-supplied serializers or partitioner will not be counted against this timeout.</dd>
+
+  <dt>lingerMs &nbsp; (<small></i><code>linger.ms</code></i></small>)</dt>
+  <dd>Default: <code>0</code>. The producer groups together any records that arrive in between request transmissions into a single batched request. Normally this occurs only under load when records arrive faster than they can be sent out. However in some circumstances the client may want to reduce the number of requests even under moderate load. This setting accomplishes this by adding a small amount of artificial delay&mdash;that is, rather than immediately sending out a record the producer will wait for up to the given delay to allow other records to be sent so that the sends can be batched together. This can be thought of as analogous to Nagle's algorithm in TCP. This setting gives the upper bound on the delay for batching: once we get <code>batch.size</code> worth of records for a partition it will be sent immediately regardless of this setting, however if we have fewer than this many bytes accumulated for this partition we will 'linger' for the specified time waiting for more records to show up. This setting defaults to 0 (i.e. no delay). Setting <code>linger.ms=5</code>, for example, would have the effect of reducing the number of requests sent but would add up to 5ms of latency to records sent in the absence of load.</dd>
 
   <dt>Retries &nbsp; (<small></i><code>retries</code></i></small>)</dt>
   <dd>Setting a value greater than zero will cause the client to resend any record whose send fails with a potentially transient error. Note that this retry is no different than if the client resent the record upon receiving the error. Allowing retries will potentially change the ordering of records because if two records are sent to a single partition, and the first fails and is retried but the second succeeds, then the second record may appear first.</dd>
@@ -69,30 +78,27 @@ The appender takes the available Kafka Producer parameters (see [ProductConfig] 
 ## Example usage
 
 ```xml
+
 <configuration>
-    <appender name="kafka-appender" class="com.calclab.kafka.KafkaLogbackAppender">
-        <BrokerList>localhost:9092</BrokerList>
+    <appender name="kafka-appender" class="io.github.rahulsinghai.KafkaLogbackAppender">
+        <BrokerList>kafkaserver.singhaiuklimited.com:6667</BrokerList>
         <Topic>log</Topic>
         <SyncSend>false</SyncSend>
 
+        <SecurityProtocol>SASL_PLAINTEXT</SecurityProtocol>
+        <SaslKerberosServiceName>kafka</SaslKerberosServiceName>
+        <ClientJaasConfPath>c:/work/jaas.conf</ClientJaasConfPath>
+        <Kerb5ConfPath>c:/work/krb5.conf</Kerb5ConfPath>
+        <saslMechanism>GSSAPI</saslMechanism>
+        
         <encoder>
-          <pattern>%date{yyyy-MM-dd'T'HH:mm:ss.SSS'Z', UTC} %-5p [%c{1}] %m</pattern>
-          <charset>UTF-8</charset>
+            <pattern>%date{yyyy-MM-dd'T'HH:mm:ss.SSS'Z', UTC} %-5p [%c{1}] %m</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
-   <root level="INFO">
-    <appender-ref ref="kafka-appender" />
-  </root>
+    <root level="INFO">
+        <appender-ref ref="kafka-appender"/>
+    </root>
 </configuration>
 ```
-
-## License
-
-Copyright © 2016 Marcus Spiegel
-
-Permission to use, copy, modify, and distribute this software for any purpose with or without fee is hereby granted, provided that the above notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-

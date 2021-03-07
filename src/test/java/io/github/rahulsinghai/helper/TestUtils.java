@@ -1,4 +1,4 @@
-package com.calclab.kafka.helper;
+package io.github.rahulsinghai.helper;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;

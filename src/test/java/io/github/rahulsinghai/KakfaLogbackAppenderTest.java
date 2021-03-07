@@ -1,9 +1,9 @@
-package com.calclab.kafka;
+package io.github.rahulsinghai;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import com.calclab.kafka.helper.TestUtils;
+import io.github.rahulsinghai.helper.TestUtils;
 import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -86,6 +86,7 @@ public class KakfaLogbackAppenderTest extends TestCase {
         logger.info("FooBarBaz!!!");
         ArrayList<String> sentMessages = TestUtils.getTopicQueueMessages(logger, topic);
 
+        Assert.assertTrue(sentMessages.size() > 0);
         Assert.assertEquals("PatternTest INFO FooBarBaz!!!", sentMessages.get(0));
     }
 

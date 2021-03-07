@@ -1,6 +1,7 @@
-package com.calclab.kafka.helper;
+package io.github.rahulsinghai.helper;
 
-import com.calclab.kafka.KafkaLogbackAppender;
+import io.github.rahulsinghai.KafkaLogbackAppender;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -9,6 +10,7 @@ import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.ProducerFencedException;
 import org.apache.kafka.common.utils.Crc32;
 
 import java.util.*;
@@ -25,14 +27,15 @@ public class InspectableKafkaLogbackAppender extends KafkaLogbackAppender {
     @Override
     protected Properties getProducerProperties() {
         // Set mandatory properties for mock implementations
+        String topic = "Test";
         setBrokerList("localhost:9092");
 
         Properties props = super.getProducerProperties();
         if (mockProperities != null) {
             props.putAll(mockProperities);
 
-            if (mockProperities.get(TOPIC) != null) {
-                setTopic((String)mockProperities.get(TOPIC));
+            if (mockProperities.get(topic) != null) {
+                setTopic((String)mockProperities.get(topic));
             }
         }
 
@@ -59,7 +62,7 @@ public class InspectableKafkaLogbackAppender extends KafkaLogbackAppender {
      * Mock implementation of a Kafka Producer which allows controlling and
      * manipulating its state and behavior.
      */
-    public class MockKafkaProducer implements Producer<String, byte[]> {
+    public class MockKafkaProducer<K, V> implements Producer<byte[], byte[]> {
 
         ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -73,7 +76,35 @@ public class InspectableKafkaLogbackAppender extends KafkaLogbackAppender {
             reset();
         }
 
-        public Future<RecordMetadata> send(final ProducerRecord<String, byte[]> record) {
+        @Override
+        public void initTransactions() {
+
+        }
+
+        @Override
+        public void beginTransaction() throws ProducerFencedException {
+
+        }
+
+        @Override
+        public void sendOffsetsToTransaction(
+            Map<TopicPartition, OffsetAndMetadata> map,
+            String s) throws ProducerFencedException {
+
+        }
+
+        @Override
+        public void commitTransaction() throws ProducerFencedException {
+
+        }
+
+        @Override
+        public void abortTransaction() throws ProducerFencedException {
+
+        }
+
+        @Override
+        public Future<RecordMetadata> send(final ProducerRecord<byte[], byte[]> record) {
 
             return executorService.submit(new Callable<RecordMetadata>() {
                 public RecordMetadata call() throws Exception {
@@ -87,7 +118,7 @@ public class InspectableKafkaLogbackAppender extends KafkaLogbackAppender {
                     queue.add(record);
 
                     return new RecordMetadata(new TopicPartition(getTopic(), 0), queue.size(), queue.size(),
-                            System.currentTimeMillis(), Crc32.crc32(record.value()), record.key().getBytes().length, record.value().length);
+                            System.currentTimeMillis(), Crc32.crc32(record.value()), record.key().length, record.value().length);
                 }
             });
         }
