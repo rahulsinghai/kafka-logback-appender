@@ -4,7 +4,7 @@
   <groupId>io.github.rahulsinghai</groupId>
   <artifactId>kafka-logback-appender</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>0.0.4-SNAPSHOT</version>
 
   <name>${project.artifactId}</name>
   <description>A simple Logback appender which sends the logging output to a Kafka</description>
